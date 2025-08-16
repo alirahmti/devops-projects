@@ -13,7 +13,7 @@ Each project lives in its own directory with its **source code**, **Dockerfiles*
 ```
 
 devops-projects/
-├── fullstack-messages/
+├── fullstack-to-do-application/
 │   └── README.md   # Detailed guide for this project
 ├── another-project/
 │   └── README.md
@@ -26,7 +26,7 @@ devops-projects/
 
 Here’s the list of available projects:  
 
-### [**fullstack-messages/**](./fullstack-messages)  
+### [**fullstack-to-do-application/**](./fullstack-to-do-application)  
 A full-stack application demonstrating a modern DevOps workflow.  
 
 **Tech stack:**  
