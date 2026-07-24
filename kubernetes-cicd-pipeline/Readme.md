@@ -1,217 +1,260 @@
-# 🚀 Kubernetes CI/CD Pipeline Demo
+# 🛍️ DevOps Shop — Full Stack Educational Project
 
-> A complete DevOps project demonstrating Docker, Kubernetes, GitLab CI/CD, and Private Container Registry integration.
+A sample project for learning **DevOps** concepts through a real-world workflow. 🚀
 
+This project is a simple **online shop** consisting of:
 
+- 🎨 **Frontend:** A modern static website with a beautiful **Liquid Glass** UI
+- ⚙️ **Backend:** A lightweight **Node.js + Express** REST API
+- 🐳 **Docker:** Ready for containerization
+- 🦊 **GitLab CI/CD:** Automated build, test, image publishing, and deployment
+- ☸️ **Kubernetes:** Production-ready deployment manifests
 
-# 📖 Overview
-
-This project demonstrates how to build, test, and deploy a containerized application to a Kubernetes cluster using **GitLab CI/CD**.
-
-The main focus of this repository is **Infrastructure Automation** rather than application development.
-
-
-
-# ✨ Features
-
-- 🐳 Dockerized Application
-- ☸️ Kubernetes Deployment
-- 🌐 Kubernetes Service
-- ⚙️ ConfigMap Configuration
-- 🚪 Ingress Configuration
-- 🔒 Private Docker Registry
-- 🔑 Image Pull Secret
-- 🔄 GitLab CI/CD Pipeline
-- 🧪 Parent/Child Pipeline
-- 🚀 Automatic Deployment (Development)
-- 🎯 Manual Deployment (Production)
+The goal is to demonstrate the complete DevOps lifecycle, from development to deployment.
 
 
 
-# 📂 Project Structure
+# 📁 Project Structure
 
 ```text
-.
-├── app/
-│   ├── main.py
-│   └── requirements.txt
-│
-├── docker/
+devops-shop/
+├── backend/              # Node.js + Express API
+│   ├── src/index.js
+│   ├── package.json
 │   └── Dockerfile
-│
-├── kubernetes/
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── ingress.yaml
-│   ├── configmap.yaml
-│   └── secret.yaml
-│
-├── .gitlab/
-│   └── ci/
-│       └── test.yml
-│
-├── .gitlab-ci.yml
-│
-├── screenshots/
-│
-└── README.md
+├── frontend/             # Static HTML/CSS/JS with Liquid Glass UI (Nginx)
+│   ├── index.html
+│   ├── style.css
+│   ├── script.js
+│   ├── nginx.conf
+│   └── Dockerfile
+├── k8s/                  # Kubernetes manifests
+│   ├── namespace.yaml
+│   ├── backend-deployment.yaml
+│   ├── backend-service.yaml
+│   ├── frontend-deployment.yaml
+│   ├── frontend-service.yaml
+│   └── ingress.yaml
+└── .gitlab-ci.yml        # Complete CI/CD Pipeline
 ```
 
 
 
-# ⚙️ CI/CD Pipeline
+# 💻 Run Locally (Without Docker)
 
-The GitLab pipeline consists of three main stages.
+## 🚀 Start the Backend
 
-## 🏗️ Build
+```bash
+cd backend
+npm install
+npm start
+```
 
-- Build Docker Image
-- Tag Docker Image
-- Push Image to Private Registry
+API Endpoint:
 
-
-
-## 🧪 Test
-
-The test stage is executed using a **Child Pipeline**.
-
-✔ Parent Pipeline
-
-⬇
-
-✔ Child Pipeline
+```
+http://localhost:3000/api/status
+```
 
 
 
-## 🚀 Deploy
+## 🌐 Start the Frontend
 
-### Development Environment
+Open another terminal:
 
-- Trigger: Every push to the **dev** branch
-- Deployment: **Automatic**
+```bash
+cd frontend
+python3 -m http.server 8080
+```
+
+Then open:
+
+```
+http://localhost:8080
+```
+
+> ⚠️ **Note**
+>
+> When running locally **without the Nginx reverse proxy**, update the `window.BACKEND_URL`
+> variable inside `index.html` to:
+>
+> ```javascript
+> http://localhost:3000
+> ```
+>
+> This ensures the frontend can communicate with the backend API correctly.
 
 
+# 🐳 Run with Docker
 
-### Production Environment
+## Build Images
 
-- Trigger: Git Tag
-- Deployment: **Manual**
+```bash
+docker build -t devops-shop-backend ./backend
+docker build -t devops-shop-frontend ./frontend
+```
+
+## Create Docker Network
+
+```bash
+docker network create devops-shop-net
+```
+
+## Run Containers
+
+```bash
+docker run -d \
+  --name backend-service \
+  --network devops-shop-net \
+  -p 3000:3000 \
+  devops-shop-backend
+
+docker run -d \
+  --name frontend \
+  --network devops-shop-net \
+  -p 8080:8080 \
+  devops-shop-frontend
+```
+
+Now open:
+
+```
+http://localhost:8080
+```
+
+✨ The Nginx server inside the frontend container automatically proxies every `/api` request to the backend container (`backend-service`) as configured in `nginx.conf`.
 
 
+# 🦊 GitLab CI/CD Pipeline
 
-# ☸️ Kubernetes Resources
+The project includes a complete GitLab CI/CD pipeline with **4 stages**:
 
-The following Kubernetes manifests are included:
+| Stage | Description |
+|--------|-------------|
+| 🔨 **Build** | Install backend dependencies |
+| 🧪 **Test** | Start the backend and verify the `/health` endpoint |
+| 🐳 **Docker** | Build and push frontend & backend images to GitLab Container Registry |
+| ☸️ **Deploy** | Replace image names inside Kubernetes manifests and deploy using `kubectl apply` |
 
-| Resource | Description |
+
+# 🔐 Required GitLab CI/CD Variables
+
+Navigate to:
+
+> **Settings → CI/CD → Variables**
+
+Create the following variable:
+
+| Variable | Description |
 |----------|-------------|
-| 📦 Deployment | Runs the application Pods |
-| 🌐 Service | Exposes the application |
-| ⚙️ ConfigMap | Stores configuration values |
-| 🚪 Ingress | External HTTP Access |
-| 🔑 Secret | Private Registry Authentication |
+| 🔑 `KUBE_CONFIG_B64` | Base64-encoded kubeconfig of your Kubernetes cluster |
 
+Generate it with:
+
+```bash
+cat ~/.kube/config | base64 -w0
+```
+
+
+## 📦 GitLab Registry Variables
+
+The following variables are automatically provided by GitLab Container Registry:
+
+- ✅ `CI_REGISTRY`
+- ✅ `CI_REGISTRY_IMAGE`
+- ✅ `CI_REGISTRY_USER`
+- ✅ `CI_REGISTRY_PASSWORD`
 
 
 # 🔒 Private Container Registry
 
-Docker images are stored in a **Private Registry**.
+If your GitLab Container Registry is **private**, create the following Kubernetes Secret so the cluster can pull your images:
 
-The Kubernetes cluster is configured to authenticate using **ImagePullSecrets** before pulling images.
-
-
-
-# 🛠️ Technologies
-
-| Tool | Purpose |
-|------|---------|
-| 🐳 Docker | Containerization |
-| ☸️ Kubernetes | Container Orchestration |
-| 🦊 GitLab CI/CD | Continuous Integration & Deployment |
-| 📦 Container Registry | Image Storage |
-| 🐧 Linux | Operating System |
-| 🌿 Git | Version Control |
-
-# 🔄 Deployment Workflow
-
-```text
-👨‍💻 Developer
-
-        │
-        ▼
-
-📤 Git Push
-
-        │
-        ▼
-
-🦊 GitLab CI/CD
-
-        │
-        ▼
-
-🏗️ Build Docker Image
-
-        │
-        ▼
-
-📦 Push to Private Registry
-
-        │
-        ▼
-
-🧪 Run Tests (Child Pipeline)
-
-        │
-        ▼
-
-☸️ Deploy to Kubernetes
-
-        │
-        ▼
-
-🌍 Application Available via Ingress
+```bash
+kubectl create secret docker-registry gitlab-registry-secret \
+  --docker-server=$CI_REGISTRY \
+  --docker-username=$CI_REGISTRY_USER \
+  --docker-password=$CI_REGISTRY_PASSWORD \
+  -n devops-shop
 ```
 
 
+# ☸️ Manual Kubernetes Deployment (Without CI/CD)
 
-# 🎯 Purpose
+Deploy the Kubernetes resources:
 
-This project was created as a **DevOps training project** to demonstrate real-world deployment practices.
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/backend-service.yaml
+kubectl apply -f k8s/frontend-service.yaml
+kubectl apply -f k8s/ingress.yaml
+```
 
-It covers:
+Then replace the image references manually (or use `sed` exactly like the Deploy stage in the CI pipeline):
 
-- ✅ Docker Image Creation
-- ✅ Private Registry Authentication
-- ✅ Kubernetes Deployment
-- ✅ GitLab CI/CD Automation
-- ✅ Parent/Child Pipelines
-- ✅ Automatic Development Deployment
-- ✅ Manual Production Deployment
+```bash
+sed 's|${CI_REGISTRY_IMAGE}|<your-registry-image-path>|g; s|${CI_COMMIT_SHORT_SHA}|latest|g' \
+  k8s/backend-deployment.yaml | kubectl apply -f -
+
+sed 's|${CI_REGISTRY_IMAGE}|<your-registry-image-path>|g; s|${CI_COMMIT_SHORT_SHA}|latest|g' \
+  k8s/frontend-deployment.yaml | kubectl apply -f -
+```
 
 
+# 🌍 Access the Application
 
-# 📸 Screenshots
+After deployment, add the following host entry to your local machine:
 
-> Add screenshots here after running the project.
+```
+devops-shop.local
+```
 
-Example:
+Point it to the IP address of your **Ingress Controller** (or **MetalLB** if you're using a bare-metal Kubernetes cluster).
 
-- 📷 GitLab Pipeline
-- 📷 Kubernetes Pods
-- 📷 Application Running
-- 📷 Ingress Access
+Then simply open:
 
+```
+http://devops-shop.local
+```
+
+🎉 Your DevOps Shop application is now up and running!
+
+
+# 🎯 Technologies Used
+
+- 🟢 Node.js
+- ⚡ Express.js
+- 🌐 HTML5
+- 🎨 CSS3
+- 💎 JavaScript
+- 🌐 Nginx
+- 🐳 Docker
+- 🦊 GitLab CI/CD
+- ☸️ Kubernetes
+- 🔀 Git
+- 📦 GitLab Container Registry
+
+
+# 📚 Learning Objectives
+
+This project is designed to help you learn:
+
+- ✅ Building REST APIs
+- ✅ Creating modern static web applications
+- ✅ Docker image creation
+- ✅ Docker networking
+- ✅ Reverse Proxy with Nginx
+- ✅ GitLab CI/CD Pipelines
+- ✅ GitLab Container Registry
+- ✅ Kubernetes Deployments
+- ✅ Kubernetes Services
+- ✅ Kubernetes Ingress
+- ✅ Automated deployments
+- ✅ Infrastructure as Code (IaC)
 
 
 # 👨‍💻 Author
 
 **Ali Rahmati**
 
-DevOps • Docker • Kubernetes • GitLab CI/CD • Linux
-
----
-
-# ⭐ If you like this project
-
-Don't forget to give it a ⭐ on GitHub!
+⭐ If this project helps you learn DevOps, consider giving it a star!
