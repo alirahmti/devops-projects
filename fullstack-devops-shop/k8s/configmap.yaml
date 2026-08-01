@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: devops-shop-config
+  namespace: devops-shop
+data:
+  NODE_ENV: "production"
+  API_PREFIX: "/api"
+  APP_NAME: "devops-shop"
